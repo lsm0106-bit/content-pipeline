@@ -94,3 +94,16 @@ source: 개인 경험
 ## 현재 상태
 
 v0.4 설치 완료, 1차 실행 테스트 성공. 메모가 채널에 매핑되고 초안 문서가 생성되고 인박스가 정리되기까지 전 구간을 확인했다. 다음 단계는 naver_blog 채널로 프롬프트부터 실제 초안까지의 첫 루프를 완주하는 것.
+
+## LLM 제공자
+
+자동 생성은 기존과 같이 `LLM_MODE: 'GEMINI'`로 켜고, `LLM_PROVIDER`로 제공자를 수동 선택합니다(자동 폴백 없음). 기본값은 `gemini`이며, 비 Gemini 제공자는 `LLM_MODEL`에 모델명을 지정하세요.
+
+| LLM_PROVIDER | 스크립트 속성 키 | 무료 키 발급 |
+| --- | --- | --- |
+| `gemini` | `GEMINI_API_KEY` | https://aistudio.google.com |
+| `githubmodels` | `GITHUB_MODELS_TOKEN` | https://github.com/marketplace/models (PAT에 `models:read` 권한) |
+| `groq` | `GROQ_API_KEY` | https://console.groq.com |
+| `openrouter` | `OPENROUTER_API_KEY` | https://openrouter.ai (모델명에 `:free`가 붙은 것만 무료) |
+
+모델명 예: GitHub Models `openai/gpt-4o-mini`, Groq `llama-3.3-70b-versatile`, OpenRouter는 `:free` 모델 ID. 키는 프로젝트 설정 → **스크립트 속성**에만 저장하고 코드나 GitHub에는 절대 넣지 않습니다.
