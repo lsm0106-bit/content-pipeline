@@ -16,7 +16,9 @@ const CONFIG = {
   // GEMINI_API_KEY는 코드에 직접 넣지 않는다(하드코딩 금지. 깃허브 공개 대비).
   // 프로젝트 설정 → 스크립트 속성(Script Properties)에 'GEMINI_API_KEY' 이름으로 등록하면
   // getApiKey_()가 읽어 쓴다. 키 발급: aistudio.google.com (무료). GEMINI 모드 때만 필요.
-  GEMINI_MODEL: 'gemini-2.0-flash',
+  GEMINI_MODEL: 'gemini-3.8-flash',
+  LLM_PROVIDER: 'gemini',    // 'gemini', 'githubmodels', 'groq', 'openrouter'
+  LLM_MODEL: '',             // 비 Gemini 제공자의 모델명
   RETRY_LIMIT: 3,
   RETRY_DELAY_MS: 5000,
   LOG_SHEET_NAME: '콘텐츠 파이프라인 로그',
@@ -59,11 +61,20 @@ function installTrigger() {
 // ---------- 메인 ----------
 
 function runDaily() {
-  // GEMINI 모드인데 키가 없으면 시작 전에 실패시킨다. 처리 도중 실패하면 메모가
-  // processed로 넘어가 초안 없이 끝날 수 있으므로, 인박스를 그대로 둔 채 즉시 중단한다.
-  if (CONFIG.LLM_MODE === 'GEMINI' && !PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY')) {
-    log_('ERROR', '-', '-', 'GEMINI 모드인데 스크립트 속성에 GEMINI_API_KEY가 없음. 인박스를 처리하지 않고 중단');
-    return;
+  // 선택한 제공자의 키/모델을 먼저 점검해 인박스가 초안 없이 처리되지 않게 한다.
+  if (CONFIG.LLM_MODE === 'GEMINI') {
+    try {
+      const provider = llmProviderConfig_();
+      if (!PropertiesService.getScriptProperties().getProperty(provider.key)) {
+        throw new Error('스크립트 속성에 ' + provider.key + '가 없음');
+      }
+      if (provider.name !== 'gemini' && !CONFIG.LLM_MODEL) {
+        throw new Error('CONFIG.LLM_MODEL에 모델명을 지정하세요 (' + provider.name + ')');
+      }
+    } catch (e) {
+      log_('ERROR', '-', '-', e.message + '. 인박스를 처리하지 않고 중단');
+      return;
+    }
   }
   const channels = CHANNEL_MAP[seoulDay_()] || [];
   if (!channels.length) {
@@ -144,7 +155,7 @@ function processMemo_(file, channels) {
     let body;
     if (CONFIG.LLM_MODE === 'GEMINI') {
       try {
-        body = withRetry_(function () { return callGemini_(prompt); }, ch);
+        body = withRetry_(function () { return callLLM_(prompt); }, ch);
       } catch (e) {
         log_('ERROR', file.getName(), ch, e.message, title, e.retries || 0);
         return; // 이 채널은 건너뛰고 나머지 채널은 계속 처리
@@ -312,6 +323,59 @@ function callGemini_(prompt) {
     throw new Error('Gemini 응답에 본문 없음 (안전 필터 차단 가능성)');
   }
   return part.text;
+}
+
+// 제공자는 CONFIG에서 수동 선택한다. 자동 폴백은 하지 않는다.
+function llmProviderConfig_() {
+  const provider = CONFIG.LLM_PROVIDER || 'gemini';
+  switch (provider) {
+    case 'gemini':
+      return { name: provider, key: 'GEMINI_API_KEY' };
+    case 'githubmodels':
+      return { name: provider, key: 'GITHUB_MODELS_TOKEN', url: 'https://models.github.ai/inference/chat/completions' };
+    case 'groq':
+      return { name: provider, key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions' };
+    case 'openrouter':
+      return { name: provider, key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions' };
+    default:
+      throw new Error('지원하지 않는 LLM_PROVIDER: ' + provider);
+  }
+}
+
+function callLLM_(prompt) {
+  if ((CONFIG.LLM_PROVIDER || 'gemini') === 'gemini') return callGemini_(prompt);
+  return callOpenAICompat_(prompt);
+}
+
+function callOpenAICompat_(prompt) {
+  const provider = llmProviderConfig_();
+  if (!provider.url) throw new Error('OpenAI 호환 제공자가 아님: ' + provider.name);
+  const key = PropertiesService.getScriptProperties().getProperty(provider.key);
+  if (!key) throw new Error('스크립트 속성에 ' + provider.key + '가 없음');
+  if (!CONFIG.LLM_MODEL) throw new Error('CONFIG.LLM_MODEL에 모델명을 지정하세요 (' + provider.name + ')');
+  const res = UrlFetchApp.fetch(provider.url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + key },
+    payload: JSON.stringify({ model: CONFIG.LLM_MODEL, messages: [{ role: 'user', content: prompt }] }),
+    muteHttpExceptions: true,
+  });
+  const code = res.getResponseCode();
+  let data;
+  try {
+    data = JSON.parse(res.getContentText());
+  } catch (e) {
+    throw new Error(provider.name + ' API ' + code + ': 응답을 파싱할 수 없음');
+  }
+  if (code !== 200) {
+    throw new Error(provider.name + ' API ' + code + ': ' + (data.error ? (data.error.message || data.error) : '알 수 없음'));
+  }
+  const choice = data.choices && data.choices[0];
+  const message = choice && choice.message;
+  if (!message || typeof message.content !== 'string') {
+    throw new Error(provider.name + ' 응답에 본문 없음');
+  }
+  return message.content;
 }
 
 // ---------- 로그 ----------
