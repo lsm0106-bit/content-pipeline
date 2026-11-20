@@ -24,7 +24,7 @@
 
 - title: 제목. 생략하면 본문 첫 줄을 제목으로 쓴다
 - core_message: 본문. 지정하면 메모의 나머지 부분 대신 이 값이 본문이 된다
-- target_channels: 발행할 채널. 쉼표로 여러 개를 쓸 수 있고, 지정하면 요일 매핑 대신 이 채널로 발행한다. 채널 ID는 templates 폴더의 템플릿 이름과 같다(naver_blog, insta_on 등)
+- target_channels: 발행할 채널. 쉼표로 여러 개를 쓸 수 있고, 지정하면 요일 매핑 대신 이 채널로 발행한다. 채널 ID는 templates 폴더의 템플릿 이름과 같다(naver_blog, insta_on 등). 미리 특정 채널용으로 써둔 글은 요일 매핑을 타지 않도록 target_channels을 지정한다
 - target_languages: 언어 태그. 템플릿의 언어 자리에 전달된다
 - reference_url: 참고 링크
 - keywords: 키워드
