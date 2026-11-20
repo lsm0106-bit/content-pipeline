@@ -41,7 +41,7 @@
 1. Apps Script 프로젝트를 만들고 code.gs를 붙여넣는다
 2. setupFolders()를 한 번 실행하면 인박스 / templates / 초안 / processed 폴더와 로그 시트가 자동으로 만들어진다
 3. 폴더 위치를 바꾸고 싶으면 CONFIG의 ROOT_NAME을 수정한다. 폴더는 ID가 아니라 이름으로 찾는다
-4. Script Properties에 GEMINI_API_KEY를 등록한다
+4. Gemini 자동 생성 모드를 쓸 때만: Script Properties에 GEMINI_API_KEY를 등록한다 (기본 PROMPT_ONLY모드에서는 필요 없다)
 5. installTrigger()를 한 번 실행해 일일 트리거를 등록한다
 
 ## 기대 효과
