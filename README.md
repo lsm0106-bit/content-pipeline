@@ -38,9 +38,9 @@
 
 ## 설치
 
-1. Google Drive에 인박스 / templates / 초안 / processed 폴더와 로그용 스프레드시트를 만든다
+1. SetupFolders()를 한번 실행하면 인박스/templates/초안/processed 폴더와 로그 시트가 자동 생성된다
 2. Apps Script 프로젝트를 만들고 code.gs를 붙여넣는다
-3. 코드 상단 설정 영역에 폴더 ID 등 값을 채운다
+3. 폴더 ID 대신 원한다면 CONFIG의 ROOT_NAME을 원하는 루트 폴더 이름으로 수정한다
 4. Script Properties에 GEMINI_API_KEY를 등록한다
 5. installTrigger()를 한 번 실행해 일일 트리거를 등록한다
 
