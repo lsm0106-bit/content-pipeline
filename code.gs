@@ -150,7 +150,7 @@ function processMemo_(file, channels) {
         return; // 이 채널은 건너뛰고 나머지 채널은 계속 처리
       }
     } else {
-      body = '[PROMPT_ONLY 모드] 아래 프롬프트를 챗봇에 붙여넣어 초안을 만든 뒤 이 문서를 교체하세요.\n\n---\n\n' + prompt;
+      body = prompt + '\n\n---\n\n[PROMPT_ONLY 모드] 위 프롬프트를 챗봇에 붙여넣어 초안을 만든 뒤 이 문서를 교체하세요. 이 줄부터는 복사하지 마세요.';
     }
     if (CONFIG.DRY_RUN) {
       log_('SUCCESS', file.getName(), ch, '[DRYRUN] 초안 생성 생략', title);
