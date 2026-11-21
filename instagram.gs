@@ -18,7 +18,7 @@
 
 const IG_CONFIG = {
   API_VERSION: 'v26.0',   // Meta가 버전을 폐기하면 여기만 바꾼다 (2026-11 기준 v21.0~v27.0 지원, 최신 v27.0)
-  MODE: 'off',            // 'off' = 초안 문서만 생성, 'publish' = Instagram에 즉시 발행
+  MODE: 'publish',            // 'off' = 초안 문서만 생성, 'publish' = Instagram에 즉시 발행
   CAPTION_MAX: 2200,      // Instagram 캡션 글자수 제한
 };
 
