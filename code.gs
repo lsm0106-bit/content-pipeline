@@ -170,6 +170,17 @@ function processMemo_(file, channels) {
     try {
       const doc = createDraftDoc_(ch, title, body);
       log_('SUCCESS', file.getName(), ch, '초안 생성 완료: ' + doc.getUrl(), title);
+      // publish_ 내부의 채널 필터에 따라 지원하지 않는 채널은 건너뛴다.
+      try {
+        const result = publish_(ch, title, body);
+        if (result) {
+          log_('SUCCESS', file.getName(), ch, '발행 완료: ' + (result.URL || ''), title);
+        } else {
+          log_('SKIP', file.getName(), ch, '자동 발행 미지원 채널', title);
+        }
+      } catch (e) {
+        log_('ERROR', file.getName(), ch, '발행 실패: ' + e.message, title);
+      }
     } catch (e) {
       log_('ERROR', file.getName(), ch, '초안 문서 생성 실패: ' + e.message, title);
     }
