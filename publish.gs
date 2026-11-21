@@ -56,7 +56,11 @@ function wpRedirectUri_() {
 
 // code.gs의 processMemo_에서 초안 생성 성공 후 호출된다.
 // WP_CONFIG.CHANNELS에 없는 채널은 조용히 건너뛴다(다른 채널 자동 발행은 아직 미지원).
-function publish_(channel, title, body) {
+function publish_(channel, title, body, meta) {
+  // Instagram 채널은 초안 없이 즉시 발행한다 (instagram.gs). MODE가 'publish'일 때만 동작.
+  if (typeof IG_CHANNELS !== 'undefined' && IG_CHANNELS[channel]) {
+    return instagramPublish_(channel, title, body, meta, false);
+  }
   if (WP_CONFIG.CHANNELS.indexOf(channel) === -1) {
     if (typeof TUMBLR_CONFIG !== 'undefined' &&
         TUMBLR_CONFIG.CHANNELS.indexOf(channel) !== -1) {
