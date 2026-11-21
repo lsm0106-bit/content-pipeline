@@ -50,43 +50,20 @@ function wpRedirectUri_() {
 }
 
 // 웹앱 배포 후 WordPress 리다이렉트를 받는다. 배포가 없으면 동작하지 않는다.
-function doGet(e) {
-  const code = e && e.parameter && e.parameter.code;
-  if (!code) {
-    return HtmlService.createHtmlOutput(
-      '잘못된 접근입니다. wpAuthorize_를 실행하고 로그에 찍힌 URL을 여세요.');
-  }
-  const props = PropertiesService.getScriptProperties();
-  const res = UrlFetchApp.fetch(WP_TOKEN_URL, {
-    method: 'post',
-    payload: {
-      client_id: props.getProperty('WP_CLIENT_ID'),
-      client_secret: props.getProperty('WP_CLIENT_SECRET'),
-      redirect_uri: wpRedirectUri_(),
-      code: code,
-      grant_type: 'authorization_code',
-    },
-    muteHttpExceptions: true,
-  });
-  let data = {};
-  try { data = JSON.parse(res.getContentText()); } catch (err) {}
-  if (res.getResponseCode() !== 200 || !data.access_token) {
-    log_('ERROR', '-', 'wordpress', 'WordPress 인증 실패: ' + res.getContentText().slice(0, 300));
-    return HtmlService.createHtmlOutput(
-      '인증 실패: ' + (data.error_description || data.error || res.getContentText().slice(0, 300)));
-  }
-  props.setProperty('WP_ACCESS_TOKEN', data.access_token);
-  log_('INFO', '-', 'wordpress', 'WordPress 인증 완료. WP_ACCESS_TOKEN 저장됨 (scope: ' + (data.scope || '-') + ')');
-  return HtmlService.createHtmlOutput(
-    '인증 완료! 이 창은 닫아도 됩니다. 앱스 스크립트로 돌아가 wpTestDraft를 실행하세요.');
-}
+
 
 // ---------- 발행 ----------
 
 // code.gs의 processMemo_에서 초안 생성 성공 후 호출된다.
 // WP_CONFIG.CHANNELS에 없는 채널은 조용히 건너뛴다(다른 채널 자동 발행은 아직 미지원).
 function publish_(channel, title, body) {
-  if (WP_CONFIG.CHANNELS.indexOf(channel) === -1) return null;
+  if (WP_CONFIG.CHANNELS.indexOf(channel) === -1) {
+    if (typeof TUMBLR_CONFIG !== 'undefined' &&
+        TUMBLR_CONFIG.CHANNELS.indexOf(channel) !== -1) {
+      return tumblrPublish_(title, body);
+    }
+    return null;
+  }
   const token = PropertiesService.getScriptProperties().getProperty('WP_ACCESS_TOKEN');
   if (!token) throw new Error('WP_ACCESS_TOKEN 없음. wpAuthorize_를 실행해 인증하세요.');
   const res = UrlFetchApp.fetch(WP_API_BASE + '/posts/new', {
