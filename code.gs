@@ -36,7 +36,7 @@ const CHANNEL_MAP = {
 };
 
 // 메모 스키마에서 지원하는 필드
-const SCHEMA_FIELDS = ['title', 'core_message', 'target_channels', 'target_languages', 'reference_url', 'keywords', 'source'];
+const SCHEMA_FIELDS = ['title', 'core_message', 'target_channels', 'target_languages', 'reference_url', 'keywords', 'source', 'image_url'];
 
 // ---------- 초기 설치 ----------
 
@@ -144,6 +144,7 @@ function processMemo_(file, channels) {
     URL: f.reference_url || '',
     KEYWORDS: f.keywords || '',
     SOURCE: f.source || '',
+    IMAGE_URL: f.image_url || '',
   };
   targets.forEach(function (ch) {
     const template = getTemplate_(ch);
@@ -172,7 +173,7 @@ function processMemo_(file, channels) {
       log_('SUCCESS', file.getName(), ch, '초안 생성 완료: ' + doc.getUrl(), title);
       // publish_ 내부의 채널 필터에 따라 지원하지 않는 채널은 건너뛴다.
       try {
-        const result = publish_(ch, title, body);
+        const result = publish_(ch, title, body, meta);
         if (result) {
           log_('SUCCESS', file.getName(), ch, '발행 완료: ' + (result.URL || ''), title);
         } else {
